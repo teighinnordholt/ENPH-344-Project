@@ -87,7 +87,7 @@ num_params = len(nums)
 N = 1000
 
 #create x array and compute potential for each set of parameters
-Xs = np.array([np.linspace(-3*lengths[i]/2, 3*lengths[i]/2, N) for i in range(num_params)]); del_xs = (lengths) / (N - 1)
+Xs = np.array([np.linspace(-3*lengths[i]/2, 3*lengths[i]/2, N) for i in range(num_params)])
 Vs = np.array([[V(x, V0s[i], widths[i], dists[i], nums[i]) for x in Xs[i]] for i in range(num_params)])
 
 #solve each set of parameters
