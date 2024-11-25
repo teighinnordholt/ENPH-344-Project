@@ -6,12 +6,12 @@ def V(x, V0, a, L, n_well):
 
     #returning the potential for a point x
     #we construct the well to be symmetric so we only consider positive x
-    
+
     #getting getting total length
     well_length = n_well * a + (n_well-1) * L
 
     #returning "infinity" beyond ends
-    if np.abs(x) >= well_length/2:
+    if np.abs(x) >= well_length/2 + L/2:
         return 1e10
 
     #case for even number of wells
@@ -75,63 +75,48 @@ def numeric_solver(x, V):
 
     return eigenvalues, eigenvectors
 
-#list of parameters to test
-widths = np.array([1,2]) #well widths
-dists = np.array([1,1]) #distances between wells
-nums = np.array([3,2]) #number of wells
-V0s = np.array([-25,-25]) #potentials
-lengths = np.array(nums * widths + (nums-1) * dists)
-num_params = len(nums)
+#list of parameter
+width = 1 #well width
+dist = 1 #distance between well
+num = 3 #number of wells
+V0 = -25 #potentials
+length = num * width + (num) * dist
 
 #number of discrete points
 N = 1000
 
-#create x array and compute potential for each set of parameters
-Xs = np.array([np.linspace(-3*lengths[i]/2, 3*lengths[i]/2, N) for i in range(num_params)])
-Vs = np.array([[V(x, V0s[i], widths[i], dists[i], nums[i]) for x in Xs[i]] for i in range(num_params)])
+#create x array and compute potentials
+xs = np.linspace(-3*length/2, 3*length/2, N)
+Vs = np.array([V(x, V0, width, dist, num) for x in xs])
 
-#solve each set of parameters
-solutions = [numeric_solver(xs, vs) for xs, vs in zip(Xs, Vs)]
-eigenvalues = [solution[0] for solution in solutions]
-eigenvectors = [solution[1] for solution in solutions]
+#solve potential
+solution = numeric_solver(xs, Vs)
+eigenvalues = solution[0]
+eigenvectors = solution[1]
 
-#plotting all potentials together
-fig, axs = plt.subplots(num_params, 1, sharex=True)
+#number of eigenstates to plot
+num_eigenstate = 5
+colors = plt.cm.cool(np.linspace(0, 1, num_eigenstate)) #'winter', 'cool', and 'brg' are good
 
-for i in range(num_params):
+plt.plot(xs, Vs, label='Potential V(x)', c='black')
 
-    axs[i].plot(Xs[i], Vs[i], label="Potential V(x)", c='black')
-    
-    for j in range(nums[i]):
-        axs[i].plot(Xs[i], eigenvectors[i][:, j], 
-                    label=f"Eigenstate {j+1}, E={eigenvalues[i][j]:.2f}")
+offset = 0
 
-    axs[i].set_xlim((-1.1*max(lengths)/2, 1.1*max(lengths)/2))
-    axs[i].set_ylim((1.1*V0s[i], -0.3*V0s[i]))
-    axs[i].set_title(f"Potential Well Configuration {i + 1}", loc='left', x=-0)
-    axs[i].set_ylabel("Energy")
-    axs[i].legend(loc='lower right')
+for i in range(num_eigenstate):
 
-axs[-1].set_xlabel("Position")
+    if i > 0:
+        offset += 1.25*(max(eigenvectors[:, i-1]) - min(eigenvectors[:,i]))
+
+    plt.plot(xs, eigenvectors[:, i]+offset, c=colors[i],
+                label=f'Eigenstate {i}, E={eigenvalues[i]:.2f}')
+
+plt.xlim((-1.25*length/2, 1.25*length/2))
+plt.ylim((1.1*V0, -0.3*V0+offset))
+
+plt.title(f'Well size = {width:.2f}, Well Seperation = {dist:.2f}', loc='left', x=-0)
+
+plt.xlabel('Position')
+plt.ylabel('Energy')
+plt.legend(loc='lower right')
 plt.tight_layout()
 plt.show()
-
-#plotting all eigenstates of one potential seperately
-for i in range(num_params):
-    fig, axs = plt.subplots(nums[i], 1, sharex=True)
-    
-    for j in range(nums[i]):
-
-        axs[j].plot(Xs[i], Vs[i], c='black')
-        axs[j].plot(Xs[i], eigenvectors[i][:, j])
-        
-        axs[j].set_xlim((-1.1 * lengths[i] / 2, 1.1 * lengths[i] / 2))
-        axs[j].set_ylim((1.1 * V0s[i], -0.3 * V0s[i]))
-        
-        axs[j].set_title(f"Eigenstate Energy {eigenvalues[i][j]}", loc='left')
-        axs[j].set_ylabel("Energy")
-    
-    axs[-1].set_xlabel("Position")
-
-    plt.tight_layout()
-    plt.show()
