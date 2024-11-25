@@ -76,17 +76,17 @@ def numeric_solver(x, V):
     return eigenvalues, eigenvectors
 
 #list of parameter
-width = 1 #well width
-dist = 1 #distance between well
-num = 3 #number of wells
+width = 1 #well size
+dist = 3 #well seperation
+num = 6 #number of wells
 V0 = -25 #potentials
-length = num * width + (num) * dist
+length = int(num * width + (num) * dist)
 
-#number of discrete points
-N = 1000
+#number of discrete points, dynamic to length based on factor found to give 'sharp' wells
+N = 500*length
 
 #create x array and compute potentials
-xs = np.linspace(-3*length/2, 3*length/2, N)
+xs = np.linspace((-3*length/2)//1, (3*length/2), N)
 Vs = np.array([V(x, V0, width, dist, num) for x in xs])
 
 #solve potential
@@ -95,7 +95,7 @@ eigenvalues = solution[0]
 eigenvectors = solution[1]
 
 #number of eigenstates to plot
-num_eigenstate = 5
+num_eigenstate = 6
 colors = plt.cm.cool(np.linspace(0, 1, num_eigenstate)) #'winter', 'cool', and 'brg' are good
 
 plt.plot(xs, Vs, label='Potential V(x)', c='black')
@@ -106,9 +106,10 @@ for i in range(num_eigenstate):
 
     if i > 0:
         offset += 1.25*(max(eigenvectors[:, i-1]) - min(eigenvectors[:,i]))
+        plt.axhline(y=offset, color=colors[i], linestyle='--', linewidth=0.5)
 
     plt.plot(xs, eigenvectors[:, i]+offset, c=colors[i],
-                label=f'Eigenstate {i}, E={eigenvalues[i]:.2f}')
+                label=f'Eigenstate {i+1}, E={eigenvalues[i]:.2f}')
 
 plt.xlim((-1.25*length/2, 1.25*length/2))
 plt.ylim((1.1*V0, -0.3*V0+offset))
@@ -119,4 +120,5 @@ plt.xlabel('Position')
 plt.ylabel('Energy')
 plt.legend(loc='lower right')
 plt.tight_layout()
-plt.show()
+plt.savefig(f'Outputs/num{num}_size{width}_sep{dist}_v{abs(V0)}.png', dpi=800)
+#plt.show()
