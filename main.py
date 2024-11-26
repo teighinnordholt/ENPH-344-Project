@@ -2,6 +2,22 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.linalg import eigh
 
+#function for external use
+def solve_well(width, dist, num, V0):
+    length = int(num * width + (num) * dist)
+
+    #number of discrete points, dynamic to length based on factor found to give 'sharp' wells
+    N = 500*length
+
+    #create x array and compute potentials
+    xs = np.linspace((-3*length/2)//1, (3*length/2), N)
+    Vs = np.array([V(x, V0, width, dist, num) for x in xs])
+
+    #solve potential
+    solution = numeric_solver(xs, Vs)
+
+    return solution[0], solution[1]
+
 def V(x, V0, a, L, n_well):
 
     #returning the potential for a point x
@@ -75,50 +91,56 @@ def numeric_solver(x, V):
 
     return eigenvalues, eigenvectors
 
-#list of parameter
-width = 1 #well size
-dist = 3 #well seperation
-num = 6 #number of wells
-V0 = -25 #potentials
-length = int(num * width + (num) * dist)
+if __name__ == '__main__':
 
-#number of discrete points, dynamic to length based on factor found to give 'sharp' wells
-N = 500*length
+    #list of parameter
+    width = 1 #well size
+    dist = 1 #well seperation
+    num = 2 #number of wells
+    V0 = -25 #potentials
+    length = int(num * width + (num) * dist)
 
-#create x array and compute potentials
-xs = np.linspace((-3*length/2)//1, (3*length/2), N)
-Vs = np.array([V(x, V0, width, dist, num) for x in xs])
+    #number of discrete points, dynamic to length based on factor found to give 'sharp' wells
+    N = 500*length
 
-#solve potential
-solution = numeric_solver(xs, Vs)
-eigenvalues = solution[0]
-eigenvectors = solution[1]
+    #create x array and compute potentials
+    xs = np.linspace((-3*length/2)//1, (3*length/2), N)
+    Vs = np.array([V(x, V0, width, dist, num) for x in xs])
 
-#number of eigenstates to plot
-num_eigenstate = 6
-colors = plt.cm.cool(np.linspace(0, 1, num_eigenstate)) #'winter', 'cool', and 'brg' are good
+    #solve potential
+    solution = numeric_solver(xs, Vs)
+    eigenvalues = solution[0]
+    eigenvectors = solution[1]
 
-plt.plot(xs, Vs, label='Potential V(x)', c='black')
+    #number of eigenstates to plot
+    num_eigenstate = 6
+    colors = plt.cm.cool(np.linspace(0, 1, num_eigenstate)) #'winter', 'cool', and 'brg' are good
 
-offset = 0
+    plt.plot(xs, Vs, label='Potential V(x)', c='black')
 
-for i in range(num_eigenstate):
+    offset = 0
 
-    if i > 0:
-        offset += 1.25*(max(eigenvectors[:, i-1]) - min(eigenvectors[:,i]))
-        plt.axhline(y=offset, color=colors[i], linestyle='--', linewidth=0.5)
+    for i in range(num_eigenstate):
 
-    plt.plot(xs, eigenvectors[:, i]+offset, c=colors[i],
-                label=f'Eigenstate {i+1}, E={eigenvalues[i]:.2f}')
+        if i > 0:
+            offset += 1.25*(max(eigenvectors[:, i-1]) - min(eigenvectors[:,i]))
+            plt.axhline(y=offset, color=colors[i], linestyle='--', linewidth=0.5)
 
-plt.xlim((-1.25*length/2, 1.25*length/2))
-plt.ylim((1.1*V0, -0.3*V0+offset))
+        plt.plot(xs, eigenvectors[:, i]+offset, c=colors[i],
+                    label=f'Eigenstate {i+1}, E={eigenvalues[i]:.2f}')
 
-plt.title(f'Well size = {width:.2f}, Well Seperation = {dist:.2f}', loc='left', x=-0)
+    plt.xlim((-1.25*length/2, 1.25*length/2))
+    plt.ylim((1.1*V0, -0.3*V0+offset))
 
-plt.xlabel('Position')
-plt.ylabel('Energy')
-plt.legend(loc='lower right')
-plt.tight_layout()
-plt.savefig(f'Outputs/num{num}_size{width}_sep{dist}_v{abs(V0)}.png', dpi=800)
-#plt.show()
+    plt.title(f'Well size = {width:.2f}, Well Seperation = {dist:.2f}', loc='left', x=-0)
+
+    plt.xlabel('Position')
+    plt.ylabel('Energy')
+    plt.legend(loc='lower right')
+    plt.tight_layout()
+    #plt.savefig(f'Outputs/Energy/num{num}_size{width}_sep{dist}_v{abs(V0)}.png', dpi=800)
+    #plt.show()
+
+    print(f'Size: {width} | Separation: {dist} | Number {num}')
+    for i in range(2*num_eigenstate):
+        print(f'Eigenstate {i+1} Energy: {eigenvalues[i]:.2f}')
